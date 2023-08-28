@@ -1,5 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import generateToken from '../utils/generateToken.js';
+import validator from 'validator';
 import User from '../models/userModel.js';
 
 //@description Authorise user/set token
@@ -10,17 +11,22 @@ const authUser = asyncHandler( async(req, res) => {
 
     const user = await User.findOne({ email });
 
-    if (user && (await user.matchPasswords(password))) {
-        generateToken(res, user._id)
-        res.status(201).json({
-            _id: user._id,
-            name: user.name,
-            email: user.email
+    try {
+        if (user && (await user.matchPasswords(password))) {
+            generateToken(res, user._id)
+            res.status(201).json({
+                _id: user._id,
+                name: user.name,
+                email: user.email
+            });
+        }
+    } catch(error) {
+        res.status(401).json({
+            error: error.message
         });
-    } else {
-        res.status(401);
-        throw new Error('Invalid email or password');
     }
+    
+
 
 
     // res.status(200).json({ message: 'Auth User' })
@@ -33,6 +39,23 @@ const registerUser = asyncHandler(async(req,res) => {
     console.log(req.body);
 
     const { name, email, password } = req.body;
+
+    //validation
+    if (!email || !password || !name ){
+        throw Error('All fields must be filled')
+    }
+    if (!validator.isEmail(email)){
+        throw Error('Email is not valid')
+    }
+    if (!validator.isStrongPassword(password)){
+        throw Error('Password not strong enough')
+    }
+
+    // checkout  isAlphaLocales for ignoring hyphenated names and 's
+    if (!validator.isAlpha(name)){
+        throw Error('Name can only contain letters')
+    }
+
     const userExist = await User.findOne({ email });
     if (userExist) {
         res.status(400);
