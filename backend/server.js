@@ -1,28 +1,17 @@
-import express from 'express';
-import dotenv from 'dotenv';
-dotenv.config();
-import cookieParser from 'cookie-parser';
-import { notFound, errorHandler } from './middleware/errorMiddleware.js';
+// server.js
+import dotenv from 'dotenv'; // Import dotenv
+import app from './app.js'; // Adjust the path as needed
 import connectDB from './config/db.js';
-const port = process.env.PORT || 8000;
-import userRoutes from './routes/userRoutes.js'
 
-connectDB(); 
-const app = express();
+// Load environment variables based on NODE_ENV
+if (process.env.NODE_ENV === 'development') {
+    dotenv.config({ path: '.env.development' });
+  } else {
+    dotenv.config();
+  }
 
-app.use(express.json());
-app.use(express.urlencoded({extended: true}));
-
-app.use(cookieParser());
-
-app.use('/api/users', userRoutes);
-
-app.get('/', (req, res) => res.send('Server is ready'));
+const port = process.env.PORT || 8080;
 
 
-app.use(notFound);
-app.use(errorHandler);
-
-app.listen(port, () => console.log(`Server started on port ${port}`))
-
-
+connectDB();
+app.listen(port, () => console.log(`Server started on port ${port}`));
